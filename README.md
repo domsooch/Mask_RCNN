@@ -195,6 +195,33 @@ If you use Docker, the code has been verified to work on
     * Windows: https://github.com/philferriere/cocoapi.
     You must have the Visual C++ 2015 build tools on your path (see the repo for additional details)
 
+
+## DomSooch's install on windows:
+
+Open Anaconda Window with admin privileges
+
+```conda create -n tensorflow python=3.4
+activate tensorflow
+
+pip install --upgrade pip
+C:\ProgramData\Anaconda3\python.exe -m pip install --upgrade pip
+
+conda install -c anaconda tensorflow-gpu
+
+conda install ipython
+conda install jupyter
+conda install -c conda-forge keras
+conda install matplotlib
+conda install cython
+conda install skimage
+conda install -c conda-forge opencv
+pip install git+https://github.com/aleju/imgaug
+conda install -c scitools/label/archive shapely
+conda install -c anaconda pandas
+
+pip install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI```
+
+
 # Projects Using this Model
 If you extend this model to other datasets or build projects that use it, we'd love to hear from you.
 

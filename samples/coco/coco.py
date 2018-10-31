@@ -61,7 +61,7 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 # Directory to save logs and model checkpoints, if not provided
 # through the command line argument --logs
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
-DEFAULT_DATASET_YEAR = "2014"
+DEFAULT_DATASET_YEAR = "NONE"
 
 ############################################################
 #  Configurations
@@ -84,7 +84,7 @@ class CocoConfig(Config):
     # GPU_COUNT = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 80  # COCO has 80 classes
+    NUM_CLASSES = 1 + 2#80  # COCO has 80 classes
 
 
 ############################################################
@@ -107,11 +107,25 @@ class CocoDataset(utils.Dataset):
 
         if auto_download is True:
             self.auto_download(dataset_dir, subset, year)
-
-        coco = COCO("{}/annotations/instances_{}{}.json".format(dataset_dir, subset, year))
-        if subset == "minival" or subset == "valminusminival":
-            subset = "val"
-        image_dir = "{}/{}{}".format(dataset_dir, subset, year)
+        
+        if year!='NONE':
+            #Default MaskRNN settings
+            coco = COCO("{}/annotations/instances_{}{}.json".format(dataset_dir, subset, year))
+            if subset == "minival" or subset == "valminusminival":
+                subset = "val"
+            image_dir = "{}/{}{}".format(dataset_dir, subset, year)
+        else:
+            #Our own settings
+            image_dir = os.path.join(dataset_dir, "newtrain" if subset == "train"
+                                 else "val2014")
+            # Create COCO object
+            json_path_dict = {
+                "train": "annotations/data.json",
+                "val": "annotations/data.json",
+                "minival": "annotations1/instances_minival2014.json",
+                "val35k": "annotations1/instances_valminusminival2014.json",
+            }
+            coco = COCO(os.path.join(dataset_dir, json_path_dict[subset]))
 
         # Load all classes or a subset?
         if not class_ids:
@@ -390,15 +404,8 @@ def evaluate_coco(model, dataset, coco, eval_type="bbox", limit=0, image_ids=Non
         t_prediction, t_prediction / len(image_ids)))
     print("Total time: ", time.time() - t_start)
 
-
-############################################################
-#  Training
-############################################################
-
-
-if __name__ == '__main__':
-    import argparse
-
+import argparse
+def make_parser():
     # Parse command line arguments
     parser = argparse.ArgumentParser(
         description='Train Mask R-CNN on MS COCO.')
@@ -428,7 +435,16 @@ if __name__ == '__main__':
                         metavar="<True|False>",
                         help='Automatically download and unzip MS-COCO files (default=False)',
                         type=bool)
-    args = parser.parse_args()
+    return parser.parse_args()
+    
+############################################################
+#  Training
+############################################################
+
+
+if __name__ == '__main__':
+
+    args = make_parser()
     print("Command: ", args.command)
     print("Model: ", args.model)
     print("Dataset: ", args.dataset)
