@@ -1275,7 +1275,10 @@ def load_image_gt(dataset, config, image_id, augment=False, augmentation=None,
     active_class_ids = np.zeros([dataset.num_classes], dtype=np.int32)
     source_class_ids = dataset.source_class_ids[dataset.image_info[image_id]["source"]]
     active_class_ids[source_class_ids] = 1
-
+    #active_class_ids = np.array([1,1,1,1,1])#HACK
+    if dataset.num_classes!=5:
+        print('image_id', image_id, 'active_class_ids', active_class_ids, 'dataset.num_classes', dataset.num_classes)
+        print (dataset.class_info)
     # Resize masks to smaller size to reduce memory usage
     if use_mini_mask:
         mask = utils.minimize_mask(bbox, mask, config.MINI_MASK_SHAPE)

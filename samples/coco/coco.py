@@ -78,13 +78,13 @@ class CocoConfig(Config):
 
     # We use a GPU with 12GB memory, which can fit two images.
     # Adjust down if you use a smaller GPU.
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 1
 
     # Uncomment to train on 8 GPUs (default is 1)
     # GPU_COUNT = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 2#80  # COCO has 80 classes
+    NUM_CLASSES = 1 + 4#80  # COCO has 80 classes
 
 
 ############################################################
@@ -116,17 +116,19 @@ class CocoDataset(utils.Dataset):
             image_dir = "{}/{}{}".format(dataset_dir, subset, year)
         else:
             #Our own settings
-            image_dir = os.path.join(dataset_dir, "newtrain" if subset == "train"
-                                 else "val2014")
+#             image_dir = os.path.join(dataset_dir, "newtrain" if subset == "train"
+#                                  else "val2014")
             # Create COCO object
             json_path_dict = {
-                "train": "annotations/data.json",
-                "val": "annotations/data.json",
-                "minival": "annotations1/instances_minival2014.json",
-                "val35k": "annotations1/instances_valminusminival2014.json",
+                "1106d_HL_train":   [os.path.join(dataset_dir, "newtrain"), "annotations/1106d_HL_data.json"],
+                "train":            [os.path.join(dataset_dir, "newtrain"), "annotations/data.json"],
+                "val":              [os.path.join(dataset_dir, "val2014"), "annotations/data.json"],
+                "minival":          [os.path.join(dataset_dir, "val2014"), "annotations1/instances_minival2014.json"],
+                "val35k":           [os.path.join(dataset_dir, "val2014"), "annotations1/instances_valminusminival2014.json"],
             }
-            coco = COCO(os.path.join(dataset_dir, json_path_dict[subset]))
-
+            image_dir, json_path = json_path_dict[subset]
+            coco = COCO(os.path.join(dataset_dir, json_path))
+        print("CocoDataset(utils.Dataset): image_dir: %s json_path: %s"%(image_dir, json_path))
         # Load all classes or a subset?
         if not class_ids:
             # All classes
@@ -140,12 +142,16 @@ class CocoDataset(utils.Dataset):
             # Remove duplicates
             image_ids = list(set(image_ids))
         else:
+            #This is a bug class_ids will always exist and this will never run
             # All images
             image_ids = list(coco.imgs.keys())
-
+        #Hack
+        class_ids = sorted(coco.getCatIds())
+        image_ids = list(coco.imgs.keys())
         # Add classes
         for i in class_ids:
             self.add_class("coco", i, coco.loadCats(i)[0]["name"])
+            #look at line 217-220 of https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/coco.py
 
         # Add images
         for i in image_ids:
@@ -156,6 +162,7 @@ class CocoDataset(utils.Dataset):
                 height=coco.imgs[i]["height"],
                 annotations=coco.loadAnns(coco.getAnnIds(
                     imgIds=[i], catIds=class_ids, iscrowd=None)))
+        self.coco=coco #HACK
         if return_coco:
             return coco
 
